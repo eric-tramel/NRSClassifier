@@ -22,11 +22,3 @@ if error_flag
   error('basic_functionality:MissingFile','Failure in basic_functionality: Missing files.');  
 end
 
-%% Dummy Data Run
-T = 20;   % Number of training and testing samples
-D = 5;    % Number of features
-l = 1;    % Regularization parameter, lambda
-DTrain = [randn(D,T) randn(D,T)+3];  % Two class training data
-DTest  = [randn(D,T) randn(D,T)+3];  % Two class testing data
-CTrain = [T T]; % Train labels
-CTest  = [T T]; % Test labels
