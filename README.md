@@ -10,7 +10,7 @@ technique first proposed in
 > W. Li, E. W. Tramel, S. Prasad, and J. E. Fowler,
 >"Nearest Regularized Subspace for Hyperspectral Classification,"
 >IEEE Transactions on Geoscience and Remote Sensing, 
->accepted October, 2010.
+>accepted October, 2012.
 
 This code is shared as a living work. It is our
 intent to add functionality, fix bugs, and address
