@@ -1,6 +1,9 @@
 Nearest Regularized Subspace (NRS) Classifier
 =============================================
 
+Introduction
+------------
+
 The NRS classifier is a supervised classification
 technique first proposed in
 
@@ -17,3 +20,22 @@ Additionally, it is our hope that this repository
 will serve to promote reproducibility in research. 
 If you're researching the topic, please feel free
 to fork us and build up new functionality!
+
+Langauges
+---------
+The NRS classifier is currently implemented in Matlab.
+This choice of language is more an artifact of our research
+work-flow than of any particular desire to choose Matlab
+over any other implementation. While Matlab is easy for us,
+many do not have access to this piece of proprietary software.
+
+Future plans include ports to other familiar script-style
+languages, such as Octave and Python, to allow for free and
+open use of this software. If you have a desire or inclination
+to port this code to your favorite language, please submit a 
+pull request and we'll build up a ports section
+
+
+
+
+
