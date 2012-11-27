@@ -24,7 +24,6 @@ Train=Train'; Test=Test';
 NClasses = length(Train_labels);
 
 DEFAULT_BIAS = 0;
-PER_CLASS_BIAS = 0;
 MATRIX_BIAS = 0;
 if nargin < 5
     DEFAULT_BIAS = 1;  
