@@ -35,16 +35,6 @@ else
     end
 end
 
-% if ~DEFAULT_BIAS && bias_functions > 1
-% % Check and see if we have per class distance metrics
-%     if length(bias) ~= NClasses
-%         fprintf('ERROR: If using multiple bias functions,\n');
-%         fprintf('the number of functions must equal the number of classes\n');
-%         return;
-%     end
-%     PER_CLASS_BIAS = 1;
-% end
-
 if NClasses == NTrain
 	% In this case, there is a training label assigned to every sample.
 	% We will reorganize the training set according tot he given labels.
@@ -82,11 +72,6 @@ for c=1:NClasses
     if DEFAULT_BIAS
         BC = default_biasing(H,Test,sqlambda);
     else
-%         if PER_CLASS_BIAS
-%             BC = calculate_biasing(H,Test,sqlambda,bias{c});
-%         else
-%             BC = calculate_biasing(H,Test,sqlambda,bias);
-%         end
             if MATRIX_BIAS == 1
                 BC = matrix_biasing(H,Test,sqlambda,bias);
             end
