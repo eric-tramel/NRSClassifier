@@ -35,3 +35,7 @@
 Icon?
 ethumbs.db
 Thumbs.db
+
+# Autosave files #
+##################
+*.asv
