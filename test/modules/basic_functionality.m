@@ -1,9 +1,9 @@
+function passed = basic_functionality()
 % basic_functionality.m
 %
 % Test module to ensure that the NRS Classifier exists and can be called.
 
 needed_file_list = {'nrs_classifier.m'};
-fprintf('Basic Functionality Test Module:\n');
 
 %% File existence check
 fprintf('  Existence Check...\n');
@@ -18,7 +18,4 @@ for i=1:length(needed_file_list)
     end
 end
 
-if error_flag
-  error('basic_functionality:MissingFile','Failure in basic_functionality: Missing files.');  
-end
-
+passed = ~error_flag;

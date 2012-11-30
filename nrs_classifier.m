@@ -2,41 +2,59 @@ function [assignments prox] = nrs_classifier(Train,Test,Train_labels,lambda,bias
 % nrs_classifier(Train,Test,Train_labels,params)
 %    Use Nearest Regularized Subspace method to classify the provided test samples
 %    based upon the given training set.
-% 
-% VERSION 2: This verison of the NRS classifier takes an additional input,
-% a function handle which one can use to set how the biasing is set. The
-% function works in the following manner.
 %
-%                            z = bias(x,y)
-% 
-% The function handle passed in should take two vector inputs and output
-% one scalar. The function can calcualte this score based on any method,
-% linear or nonlinear.
+% Inputs:
+%       * Train             -- Training data matrix (Ntrain x d)
+%       * Test              -- Testing data matrix (Ntest x d)
+%       * Train_labels      -- Class labels of the training dataset (Classes x 1)
+%       * lambda            -- Regularization parameter (scalar)
+%       * bias              -- [Optional] Allows the user to specify how to calculate
+%                              the biasing factors in the matrix \Gamma. Can take the
+%                              form of a transform matrix (f x d) or functional handle.
+%                                > If chosen to be a function handle, the function must
+%                                  take two (1 x d) vector inputs and calculate a scalar
+%                                  value result.
+%                              Default: Euclidean biasing. 
+% Outputs:
+%       * assignments       -- Class labels assigned to each of the test samples (Ntest x 1)
+%
 
-% TODO: Rearrange everything to be naturally inline with the data being
-% arranged in rows rather than columns
 Train=Train'; Test=Test';
 
 [features NTrain] = size(Train);
 [features NTest] = size(Test);
-
-% Check the Training set class labels.
 NClasses = length(Train_labels);
 
-DEFAULT_BIAS = 0;
-MATRIX_BIAS = 0;
-if nargin < 5
-    DEFAULT_BIAS = 1;  
-else
-    bias_functions = length(bias);
-    if ismatrix(bias)
-        MATRIX_BIAS=1;
+%% Bias Check
+% Determine which kind of biasing the user wants to use when constructing 
+% the Tikhonov matrix, \Gamma.
+if nargin > 4
+    if isa(bias,'function_handle')
+        biasing = @(A,B,l,b) kernel_biasing(A,B,l,b);
+    else
+        if ~isscalar(bias)
+            if ~iscell(bias)
+                biasing = @(A,B,l,b) matrix_biasing(A,B,l,b);
+            else
+                error('nrs_classifier:UnsupportedBiasType','Bias input format is unsupported!');
+            end
+        else
+            error('nrs_classifier:UnsupportedBiasType','Bias input format is unsupported!');
+        end    
     end
+else
+    bias = [];
+    biasing = @(A,B,l,b) default_biasing(A,B,l);
 end
 
+%% Label Check
+% Make sure that the training labels are in the expected format. The label
+% vector should consist of C entries, where C is the number of classes and 
+% each entry specifies how many of the training samples belong to the class
+% at that index.
 if NClasses == NTrain
 	% In this case, there is a training label assigned to every sample.
-	% We will reorganize the training set according tot he given labels.
+	% We will reorganize the training set according to the given labels.
 	[sorted_labels ordering] = sort(Train_labels,'ascend');
 	Train = Train(:,ordering);
 	Train_labels = hist(sorted_labels,unique(sorted_labels));
@@ -46,10 +64,11 @@ end
 % Define the output variables
 approx_acc = zeros(NClasses,NTest);
 
-% Square lambda entries
-sqlambda = lambda.^2;
+% Removed squaring of lambda entries as this is not actually necessary to 
+% the operation of the classifier (vestigal).
+%sqlambda = lambda.^2;
 
-% Pre-calculate Class Covariance Matrices
+%% Pre-calculate Class Covariance Matrices
 Sigma = cell(1,NClasses);
 first = 1;
 for c=1:NClasses
@@ -60,29 +79,31 @@ end
 
 
 
-% Calculate approximations for the testing set for each class
-% and for each trail.
+%% Main Loop
+% The classifier needs to find an approximation for each test sample for
+% each class. So, the number of approximations is of order O(NClasses*NTest).
+% The downside of this approach, computationally, is that the inverse of a
+% (Ntrain x Ntrain) matrix must be computed O(NClasses*NTest) times, though
+% perhaps not explicitly (\ operator).
 first = 1;
 for c=1:NClasses
     fprintf('%d/%d, ',c,NClasses);
     last = first+ Train_labels(c)-1;
-    H = Train(:,first:last);
-    
-    if DEFAULT_BIAS
-        BC = default_biasing(H,Test,sqlambda);
-    else
-            if MATRIX_BIAS == 1
-                BC = matrix_biasing(H,Test,sqlambda,bias);
-            end
-    end
+    ClassTrain = Train(:,first:last);
+
+    % Calclate all biasings for this class's training samples against
+    % all test samples.
+    BC = biasing(ClassTrain,Test,lambda,bias);  
+
+
     % Now, for every test sample we have to calculate an approximation
     for t=1:NTest
         tsamp = Test(:,t);          
 
         G = diag(BC(:,t));
-        weights = (Sigma{c}+G)\(H'*tsamp);
+        weights = (Sigma{c}+G)\(ClassTrain'*tsamp);
 
-        approx = H*weights;
+        approx = ClassTrain*weights;
         r = approx(:) - tsamp(:);
         approx_acc(c,t) = r'*r;
     end
@@ -144,7 +165,7 @@ else
     end
 end
 
-function BiasCorrsp = calculate_biasing(DTrain,DTest,lambda,bias)
+function BiasCorrsp = kernel_biasing(DTrain,DTest,lambda,bias)
 % For the sake of simplicity at the moment, we'll do this
 % the slow way. 
 NTrain = size(DTrain,2);

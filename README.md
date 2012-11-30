@@ -33,7 +33,7 @@ Future plans include ports to other familiar script-style
 languages, such as Octave and Python, to allow for free and
 open use of this software. If you have a desire or inclination
 to port this code to your favorite language, please submit a 
-pull request and we'll build up a ports section
+pull request and we'll build up a ports section.
 
 
 
