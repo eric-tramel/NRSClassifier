@@ -10,11 +10,11 @@ function [assignments prox] = nrs_classifier(Train,Test,Train_labels,lambda,bias
 %       * lambda            -- Regularization parameter (scalar)
 %       * bias              -- [Optional] Allows the user to specify how to calculate
 %                              the biasing factors in the matrix \Gamma. Can take the
-%                              form of a transform matrix (f x d) or functional handle.
+%                              form of a transform matrix (f x d) or function handle.
 %                                > If chosen to be a function handle, the function must
 %                                  take two (1 x d) vector inputs and calculate a scalar
 %                                  value result.
-%                              Default: Euclidean biasing. 
+%                              Default: Euclidean distance in feature space. 
 % Outputs:
 %       * assignments       -- Class labels assigned to each of the test samples (Ntest x 1)
 %
@@ -22,8 +22,18 @@ function [assignments prox] = nrs_classifier(Train,Test,Train_labels,lambda,bias
 Train=Train'; Test=Test';
 
 [features NTrain] = size(Train);
-[features NTest] = size(Test);
-NClasses = length(Train_labels);
+[features2 NTest] = size(Test);
+NClasses = length(Train_labels);    
+approx_acc = zeros(NClasses,NTest); % Buffer to hold approximation accuracies
+
+%% Data Check
+if features ~= features2
+    error('nrs_classifier:DimensionMismatch','The feature dimensionality of the Training and Test sets are different!');
+end
+
+if ~isreal([Train Test])
+    error('nrs_classifier:ComplexData','Complex data types are currently unsupported.');
+end
 
 %% Bias Check
 % Determine which kind of biasing the user wants to use when constructing 
@@ -61,13 +71,6 @@ if NClasses == NTrain
 	NClasses = length(Train_labels);
 end
 
-% Define the output variables
-approx_acc = zeros(NClasses,NTest);
-
-% Removed squaring of lambda entries as this is not actually necessary to 
-% the operation of the classifier (vestigal).
-%sqlambda = lambda.^2;
-
 %% Pre-calculate Class Covariance Matrices
 Sigma = cell(1,NClasses);
 first = 1;
@@ -76,8 +79,6 @@ for c=1:NClasses
     Sigma{c} = Train(:,first:last)'*Train(:,first:last);     
 	first = last+1;
 end
-
-
 
 %% Main Loop
 % The classifier needs to find an approximation for each test sample for
@@ -99,8 +100,8 @@ for c=1:NClasses
     % Now, for every test sample we have to calculate an approximation
     for t=1:NTest
         tsamp = Test(:,t);          
-
         G = diag(BC(:,t));
+        
         weights = (Sigma{c}+G)\(ClassTrain'*tsamp);
 
         approx = ClassTrain*weights;
