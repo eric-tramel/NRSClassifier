@@ -23,18 +23,20 @@ for c=1:NClasses
     fprintf('%d/%d, ',c,NClasses);
     last = first+ Train_labels(c)-1;
     ClassTrain = Train(:,first:last);
+    NClassTrain = size(ClassTrain,2);
 
     % Calclate all biasings for this class's training samples against
     % all test samples.
     BC = biasing(ClassTrain,Test,lambda);  
-
+    
+    ClassTrainTTest = ClassTrain'*Test;
 
     % Now, for every test sample we have to calculate an approximation
     for t=1:NTest
         tsamp = Test(:,t);          
-        G = diag(BC(:,t));
-    
-        weights = (Sigma{c}+G)\(ClassTrain'*tsamp);
+        G = spdiags(BC(:,t),0,NClassTrain,NClassTrain);
+        SigG = Sigma{c} + G;
+        weights = SigG\ClassTrainTTest(:,t);
         approx = ClassTrain*weights;
         scores(c,t) = ranking(approx,tsamp);
     end

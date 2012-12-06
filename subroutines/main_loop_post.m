@@ -8,6 +8,7 @@ scores = zeros(NClasses,NTest);
 %% Pre-calculations
 Sigma = Train'*Train;
 BC = biasing(Train,Test,lambda);
+TrainTTest = Train'*Test;
 
 %% Main Loop
 % The classifier needs to find an approximation for each test sample for
@@ -16,9 +17,9 @@ BC = biasing(Train,Test,lambda);
 % (Ntrain x Ntrain) matrix must be computed O(NClasses*NTest) times, though
 % perhaps not explicitly (\ operator).
 for t=1:NTest
-    tsamp = Test(:,t);
-    G = diag(BC(:,t));
-    weights(:,t) = (Sigma+G)\(Train'*tsamp);
+    G = spdiags(BC(:,t),0,NTrain,NTrain);
+    SigG = Sigma + G;
+    weights(:,t) = SigG\TrainTTest(:,t);
 end
 
 first = 1;
