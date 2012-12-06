@@ -1,23 +1,27 @@
-function passed = kernel_biasing()
-% kernel_biasing.m
+function passed = ranking_check()
+% ranking_check.m
 %
-% Test module to check that the kernel based biasing works properly.
-passed = 1;
+% Test module to make sure that the ranking function passing is working
+% correctly.
 
+passed = 1;
 %% Dummy Data Run
 T = 20;   % Number of training and testing samples
 D = 5;    % Number of features
 l = 1;    % Regularization parameter, lambda
-
-L = @(a,b) rbf(a,b);
-
 DTrain = [randn(D,T) randn(D,T)+3];  % Two class training data
 DTest  = [randn(D,T) randn(D,T)+3];  % Two class testing data
 CTrain = [T T]; % Train labels
+CTest  = [T T]; % Test labels
+
+
+
+params.ranking = @(x,y) (x'*y)./((x'*x) * (y'*y));
+params.features = D;
 
 try
-[approx prox] = nrs_classifier(DTrain',DTest',CTrain,l,L);
-catch err 
+	[approx prox] = nrs_classifier(DTrain',DTest',CTrain,l,params);
+catch err
 	if islocalerror(err)
 		fprintf('  ERROR: %s\n',err.identifier);
 		passed = 0;
@@ -25,8 +29,3 @@ catch err
 		rethrow(err);
 	end
 end
-
-function z = rbf(x,y)
-sig = 5;
-z = (x-y)'*(x-y)./sig;
-z = exp(-z);

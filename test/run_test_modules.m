@@ -9,6 +9,7 @@
 addpath('./modules');
 addpath('./subroutines');
 addpath('..');
+addpath('../subroutines');
 
 module_list = dir('./modules/*.m');
 num_modules = length(module_list);

@@ -14,8 +14,22 @@ DTest  = [randn(D,T) randn(D,T)+3];  % Two class testing data
 CTrain = [T T]; % Train labels
 CTest  = [T T]; % Test labels
 
+params.features = D;
+
 try
-	[approx prox] = nrs_classifier(DTrain',DTest',CTrain,l);
+	[approx prox] = nrs_classifier(DTrain',DTest',CTrain,l,params);
+catch err
+	if islocalerror(err)
+		fprintf('  ERROR: %s\n',err.identifier);
+		passed = 0;
+	else
+		rethrow(err);
+	end
+end
+
+params.partition_mode = 'post';
+try
+	[approx prox] = nrs_classifier(DTrain',DTest',CTrain,l,params);
 catch err
 	if islocalerror(err)
 		fprintf('  ERROR: %s\n',err.identifier);
