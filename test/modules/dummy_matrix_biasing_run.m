@@ -30,3 +30,19 @@ catch err
 	end
 end
 
+
+%% Attempt precalculated biasing
+params.bias = randn(2*T,2*T);
+params.bias_precal = 1;
+
+try
+[approx prox] = nrs_classifier(DTrain',DTest',CTrain,l,params);
+catch err 
+	if islocalerror(err)
+		fprintf('  ERROR: %s\n',err.identifier);
+		passed = 0;
+	else
+		rethrow(err);
+	end
+end
+

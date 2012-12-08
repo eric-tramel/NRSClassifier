@@ -17,7 +17,17 @@ function [assignments prox] = nrs_classifier(Train,Test,Train_labels,lambda,para
 %                                > If chosen to be a function handle, the function must
 %                                  take two (1 x d) vector inputs and calculate a scalar
 %                                  value result.
-%                              (Default: Euclidean distance in feature space) 
+%                                 (Default: Euclidean distance in feature space)
+%       * params.bias_precal-- If set to "1", this variable indicates that
+%                              the matrix contained in params.bias holds
+%                              a set of preclaculated weights. This matrix
+%                              should be of dimensionality (NTrain x
+%                              NTest). 
+%                                > 1  : params.bias contains precalculated
+%                                biasing coefficients.
+%                                > 0  : params.bias tells how to calculate
+%                                biasing coefficients.
+%                               
 %       * params.features   -- Specify the dimensionality (d) of the
 %                              feature vectors used in Train and Test.
 %                              Specify this parameter if you are unsure
@@ -104,19 +114,32 @@ end
 %% Bias Check
 % Determine which kind of biasing the user wants to use when constructing 
 % the Tikhonov matrix, \Gamma.
+bias_precalculated = 0;
+if isfield(params,'bias_precal')
+    bias_precalculated = params.bias_precal;
+end
+
 if isfield(params,'bias')
-    if isa(params.bias,'function_handle')
-        biasing = @(A,B,l) kernel_biasing(A,B,l,params.bias);
+    if bias_precalculated
+        [biasRows biasCols] = size(params.bias);
+        if biasRows ~= NTrain || biasCols ~= NTest
+            error('nrs_classifier:DimensionMismatch','Biasing Coefficient matrix of improper size.');
+        end
+        biasing = @(A,B,l) params.bias;
     else
-        if ~isscalar(params.bias)
-            if ~iscell(params.bias)
-                biasing = @(A,B,l) matrix_biasing(A,B,l,params.bias);
+        if isa(params.bias,'function_handle')
+            biasing = @(A,B,l) kernel_biasing(A,B,l,params.bias);
+        else
+            if ~isscalar(params.bias)
+                if ~iscell(params.bias)
+                    biasing = @(A,B,l) matrix_biasing(A,B,l,params.bias);
+                else
+                    error('nrs_classifier:UnsupportedBiasType','Bias input format is unsupported!');
+                end
             else
                 error('nrs_classifier:UnsupportedBiasType','Bias input format is unsupported!');
-            end
-        else
-            error('nrs_classifier:UnsupportedBiasType','Bias input format is unsupported!');
-        end    
+            end    
+        end
     end
 else
     biasing = @(A,B,l) default_biasing(A,B,l);
