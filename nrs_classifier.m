@@ -125,7 +125,7 @@ if isfield(params,'bias')
         if biasRows ~= NTrain || biasCols ~= NTest
             error('nrs_classifier:DimensionMismatch','Biasing Coefficient matrix of improper size.');
         end
-        biasing = @(A,B,l) params.bias;
+        biasing = @(A,B,l) l.*params.bias;
     else
         if isa(params.bias,'function_handle')
             biasing = @(A,B,l) kernel_biasing(A,B,l,params.bias);
