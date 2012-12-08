@@ -29,6 +29,12 @@ for c=1:NClasses
     % all test samples.
     BC = biasing(ClassTrain,Test,lambda);  
     
+    if size(BC,2) > NClassTrain
+        % The biasings were pre calculated, we need to cut them down
+        BC = BC(:,first:last);
+    end
+    
+    
     ClassTrainTTest = ClassTrain'*Test;
 
     % Now, for every test sample we have to calculate an approximation
